@@ -1,0 +1,30 @@
+name: tracky_mobile
+description: "Traky is a powerful mobile platform revolutionizing gold traceability, ensuring ethical sourcing and combating illegal mining by providing a transparent chain of custody from mine to market."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons:
+  google_fonts:
+  flutter_riverpod:
+  dio:
+  shared_preferences:
+  qr_flutter:
+  mobile_scanner:
+  intl:
+  uuid:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+
+flutter:
+  uses-material-design: true
