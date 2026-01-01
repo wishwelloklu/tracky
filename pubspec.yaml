@@ -1,0 +1,44 @@
+name: tracky_mobile
+description: "Traky is a powerful mobile platform revolutionizing gold traceability, ensuring ethical sourcing and combating illegal mining by providing a transparent chain of custody from mine to market."
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.3
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.3.3
+  flutter_riverpod: ^3.1.0
+  dio: ^5.9.0
+  shared_preferences: ^2.5.4
+  mobile_scanner: ^7.1.4
+  intl: ^0.20.2
+  uuid: ^4.5.2
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^6.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
