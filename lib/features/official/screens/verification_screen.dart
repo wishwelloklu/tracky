@@ -12,7 +12,7 @@ class VerificationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final packageAsync = ref.watch(packageByIdProvider(tagId));
+    final packageAsync = ref.watch(allPackagesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -26,7 +26,7 @@ class VerificationScreen extends ConsumerWidget {
       ),
       body: packageAsync.when(
         data: (package) => package != null
-            ? _buildPackageDetails(context, ref, package)
+            ? _buildPackageDetails(context, ref, package.first)
             : _buildPackageNotFound(context, tagId),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _buildError(context, error.toString()),
@@ -140,7 +140,7 @@ class VerificationScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _DetailRow(label: 'Miner ID', value: package.minerId),
+                  _DetailRow(label: 'Miner ID', value: package.minerId??''),
                   _DetailRow(label: 'Miner Name', value: package.minerName),
                 ],
               ),

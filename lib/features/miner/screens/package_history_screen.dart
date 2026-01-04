@@ -100,7 +100,7 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
 
           return RefreshIndicator(
             onRefresh: () async {
-              await ref.read(minerPackagesProvider.notifier).refresh(user.id);
+              await ref.read(minerPackagesProvider.notifier).refresh();
             },
             child: TabBarView(
               controller: _tabController,
@@ -147,7 +147,7 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () =>
-                    ref.read(minerPackagesProvider.notifier).refresh(user.id),
+                    ref.read(minerPackagesProvider.notifier).refresh(),
                 child: const Text('Retry'),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:tracky_mobile/core/models/api_response.dart';
 import 'package:tracky_mobile/core/network/auth_interceptor.dart';
 
 class DioClient {
@@ -7,7 +8,7 @@ class DioClient {
   DioClient() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://192.168.0.102',
+  
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         responseType: ResponseType.json,
@@ -27,7 +28,7 @@ class DioClient {
     );
   }
 
-  Future<Response> get(
+  Future<ApiResponse<T>> get<T>(
     String url, {
     Map<String, dynamic>? queryParameters,
     Options? options,
@@ -42,13 +43,16 @@ class DioClient {
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
-      return response;
+      if (response.isSuccess) {
+        return ApiResponse.completed(response.data);
+      }
+      return ApiResponse.error(response.data['message']);
     } on DioException {
       rethrow;
     }
   }
 
-  Future<Response> post(
+  Future<ApiResponse<T>> post<T>(
     String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
@@ -67,13 +71,16 @@ class DioClient {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
       );
-      return response;
+      if (response.isSuccess) {
+        return ApiResponse.completed(response.data);
+      }
+      return ApiResponse.error(response.data['message']);
     } on DioException {
       rethrow;
     }
   }
 
-  Future<Response> put(
+  Future<ApiResponse<T>> put<T>(
     String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
@@ -92,13 +99,16 @@ class DioClient {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
       );
-      return response;
+      if (response.isSuccess) {
+        return ApiResponse.completed(response.data);
+      }
+      return ApiResponse.error(response.data['message']);
     } on DioException {
       rethrow;
     }
   }
 
-  Future<Response> patch(
+  Future<ApiResponse<T>> patch<T>(
     String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
@@ -117,13 +127,16 @@ class DioClient {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
       );
-      return response;
+      if (response.isSuccess) {
+        return ApiResponse.completed(response.data);
+      }
+      return ApiResponse.error(response.data['message']);
     } on DioException {
       rethrow;
     }
   }
 
-  Future<Response> delete(
+  Future<ApiResponse<T>> delete<T>(
     String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
@@ -138,7 +151,10 @@ class DioClient {
         options: options,
         cancelToken: cancelToken,
       );
-      return response;
+      if (response.isSuccess) {
+        return ApiResponse.completed(response.data);
+      }
+      return ApiResponse.error(response.data['message']);
     } on DioException {
       rethrow;
     }

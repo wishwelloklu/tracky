@@ -372,8 +372,8 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
           mineDate: _selectedDate,
           location: location,
           grade: _selectedGrade!,
-          minerId: user.id,
-          minerName: user.name,
+          
+          minerName: user.firstName,
           notes: notes,
         );
   }

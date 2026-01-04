@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:tracky_mobile/core/services/storage_service.dart';
 
@@ -11,11 +15,26 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    options.baseUrl = 'http://192.168.0.102:8080';
     final token = StorageService.getToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+
+    log(
+      '--> ${options.method.toUpperCase()} ${options.baseUrl}${options.path}',
+    );
+    log('Headers: ${options.headers}');
+    log('Payload: ${json.encode(options.data)}');
+
     handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    log('<-- ${response.statusCode} ${response.requestOptions.uri}');
+    log('Response Data: ${json.encode(response.data)}');
+    handler.next(response);
   }
 
   @override
@@ -64,12 +83,19 @@ class AuthInterceptor extends Interceptor {
       // For now, assuming standard access token refresh flow.
       final response = await refreshDio.post('/auth/refresh-token');
       if (response.statusCode == 200) {
-        return response
-            .data['token']; // Adjust based on actual response structure
+        return response.data['token'];
       }
     } catch (e) {
       return null;
     }
     return null;
+  }
+}
+
+extension ResponseExtension on Response {
+  bool get isSuccess {
+    final is200 = statusCode == HttpStatus.ok;
+    final is201 = statusCode == HttpStatus.created;
+    return is200 || is201;
   }
 }

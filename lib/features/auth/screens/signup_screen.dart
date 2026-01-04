@@ -45,7 +45,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (next.isAuthenticated && next.user != null) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => widget.role == UserRole.miner
+            builder: (context) => widget.role == UserRole.user
                 ? const MinerDashboardScreen()
                 : const OfficialDashboardScreen(),
           ),
@@ -72,7 +72,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Icon(
-                    widget.role == UserRole.miner
+                    widget.role == UserRole.user
                         ? Icons.engineering
                         : Icons.verified_user,
                     size: 40,
@@ -166,16 +166,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   controller: _locationController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    labelText: widget.role == UserRole.miner
+                    labelText: widget.role == UserRole.user
                         ? 'Mining Location'
                         : 'Location',
-                    hintText: widget.role == UserRole.miner
+                    hintText: widget.role == UserRole.user
                         ? 'e.g., Obuasi, Ashanti Region'
                         : 'e.g., Accra',
                     prefixIcon: const Icon(Icons.location_on),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: widget.role == UserRole.miner
+                  validator: widget.role == UserRole.user
                       ? (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your mining location';
@@ -337,9 +337,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 extension on UserRole {
   String get roleDisplayName {
     switch (this) {
-      case UserRole.miner:
+      case UserRole.user:
         return 'Small-Scale Miner';
-      case UserRole.official:
+      case UserRole.admin:
         return 'GOLDBOD Official';
     }
   }

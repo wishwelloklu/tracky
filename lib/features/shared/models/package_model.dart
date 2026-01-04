@@ -9,7 +9,7 @@ class PackageModel {
   final DateTime mineDate;
   final String location;
   final String grade;
-  final String minerId;
+  final String? minerId;
   final String minerName;
   final DateTime createdAt;
   final PackageStatus status;
@@ -22,7 +22,7 @@ class PackageModel {
     required this.mineDate,
     required this.location,
     required this.grade,
-    required this.minerId,
+    this.minerId,
     required this.minerName,
     required this.createdAt,
     this.status = PackageStatus.pending,
@@ -30,7 +30,7 @@ class PackageModel {
   });
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = {
       'id': id,
       'mineralType': mineralType,
       'quantity': quantity,
@@ -43,11 +43,13 @@ class PackageModel {
       'status': status.name,
       'notes': notes,
     };
+    map.removeWhere((key, value) => value == null);
+    return map;
   }
 
   factory PackageModel.fromJson(Map<String, dynamic> json) {
     return PackageModel(
-      id: json['id'],
+      id: json['id'].toString(),
       mineralType: json['mineralType'],
       quantity: (json['quantity'] as num).toDouble(),
       mineDate: DateTime.parse(json['mineDate']),
@@ -93,7 +95,8 @@ class PackageModel {
   }
 
   String get formattedMineDate => DateFormat('MMM dd, yyyy').format(mineDate);
-  String get formattedCreatedAt => DateFormat('MMM dd, yyyy HH:mm').format(createdAt);
+  String get formattedCreatedAt =>
+      DateFormat('MMM dd, yyyy HH:mm').format(createdAt);
   String get statusDisplayName {
     switch (status) {
       case PackageStatus.pending:
@@ -104,6 +107,6 @@ class PackageModel {
         return 'Rejected';
     }
   }
-  
+
   String get quantityDisplayText => '${quantity.toStringAsFixed(2)}g';
 }

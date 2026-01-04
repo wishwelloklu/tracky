@@ -37,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.isAuthenticated && next.user != null) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => widget.role == UserRole.miner
+            builder: (context) => widget.role == UserRole.user
                 ? const MinerDashboardScreen()
                 : const OfficialDashboardScreen(),
           ),
@@ -64,7 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Icon(
-                    widget.role == UserRole.miner
+                    widget.role == UserRole.user
                         ? Icons.engineering
                         : Icons.verified_user,
                     size: 40,
@@ -104,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        if (widget.role == UserRole.miner) ...[
+                        if (widget.role == UserRole.user) ...[
                           Text(
                             'Email: kwame@example.com',
                             style: Theme.of(context).textTheme.bodySmall,
@@ -284,9 +284,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 extension on UserRole {
   String get roleDisplayName {
     switch (this) {
-      case UserRole.miner:
+      case UserRole.user:
         return 'Small-Scale Miner';
-      case UserRole.official:
+      case UserRole.admin:
         return 'GOLDBOD Official';
     }
   }

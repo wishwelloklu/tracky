@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:tracky_mobile/features/miner/services/package_service.dart';
 import 'package:tracky_mobile/features/shared/models/package_model.dart';
 
-final packageServiceProvider = Provider<PackageService>(
-  (ref) => PackageService(),
-);
+import 'package:tracky_mobile/core/network/dio_provider.dart';
+
+final packageServiceProvider = Provider<PackageService>((ref) {
+  final dioClient = ref.read(dioClientProvider);
+  return PackageService(dioClient);
+});
 
 final minerPackagesProvider =
     StateNotifierProvider<
@@ -28,18 +31,18 @@ class MinerPackagesNotifier
   MinerPackagesNotifier(this._packageService)
     : super(const AsyncValue.loading());
 
-  Future<void> loadMinerPackages(String minerId) async {
+  Future<void> loadMinerPackages() async {
     try {
       state = const AsyncValue.loading();
-      final packages = await _packageService.getMinerPackages(minerId);
+      final packages = await _packageService.getMinerPackages();
       state = AsyncValue.data(packages);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
   }
 
-  Future<void> refresh(String minerId) async {
-    await loadMinerPackages(minerId);
+  Future<void> refresh() async {
+    await loadMinerPackages();
   }
 
   void addPackage(PackageModel package) {
@@ -85,7 +88,6 @@ class PackageCreationNotifier extends StateNotifier<PackageCreationState> {
     required DateTime mineDate,
     required String location,
     required String grade,
-    required String minerId,
     required String minerName,
     String? notes,
   }) async {
@@ -98,7 +100,6 @@ class PackageCreationNotifier extends StateNotifier<PackageCreationState> {
         mineDate: mineDate,
         location: location,
         grade: grade,
-        minerId: minerId,
         minerName: minerName,
         notes: notes,
       );
@@ -122,13 +123,13 @@ class PackageCreationNotifier extends StateNotifier<PackageCreationState> {
 }
 
 // Provider for getting a specific package by ID
-final packageByIdProvider = FutureProviderFamily<PackageModel?, String>((
-  ref,
-  packageId,
-) async {
-  final packageService = ref.read(packageServiceProvider);
-  return await packageService.getPackageById(packageId);
-});
+// final packageByIdProvider = FutureProviderFamily<PackageModel?, String>((
+//   ref,
+//   packageId,
+// ) async {
+//   final packageService = ref.read(packageServiceProvider);
+//   return await packageService.getPackageById(packageId);
+// });
 
 // Provider for all packages (used by officials)
 final allPackagesProvider =

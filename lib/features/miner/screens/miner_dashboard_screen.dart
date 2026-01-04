@@ -24,7 +24,7 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(authStateProvider).user;
       if (user != null) {
-        ref.read(minerPackagesProvider.notifier).loadMinerPackages(user.id);
+        ref.read(minerPackagesProvider.notifier).loadMinerPackages();
       }
     });
   }
@@ -41,7 +41,7 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hi, ${user.name.split(' ').first}! 👋'),
+        title: Text('Hi, ${user.firstName}! 👋'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -51,7 +51,7 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(minerPackagesProvider.notifier).refresh(user.id);
+          await ref.read(minerPackagesProvider.notifier).loadMinerPackages();
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -83,7 +83,7 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user.name,
+                              user.firstName,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),

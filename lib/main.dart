@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tracky_mobile/theme.dart';
 import 'package:tracky_mobile/core/services/storage_service.dart';
-import 'package:tracky_mobile/features/miner/services/package_service.dart';
 import 'package:tracky_mobile/features/auth/providers/auth_provider.dart';
 import 'package:tracky_mobile/features/auth/screens/role_selection_screen.dart';
 import 'package:tracky_mobile/features/miner/screens/miner_dashboard_screen.dart';
@@ -15,10 +14,6 @@ void main() async {
   // Initialize storage service
   await StorageService.init();
 
-  // Initialize sample data
-  final packageService = PackageService();
-  await packageService.initializeSampleData();
-
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -27,6 +22,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    DateTime.now().millisecondsSinceEpoch;
     return MaterialApp(
       title: 'Traky - Gold Traceability',
       debugShowCheckedModeBanner: false,
@@ -68,7 +64,7 @@ class AppInitializer extends ConsumerWidget {
       debugPrint(
         'AppInitializer: Redirecting to dashboard as ${authState.user!.role}',
       );
-      return authState.user!.role == UserRole.miner
+      return authState.user!.role == UserRole.user
           ? const MinerDashboardScreen()
           : const OfficialDashboardScreen();
     }

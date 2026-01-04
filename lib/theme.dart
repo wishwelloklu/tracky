@@ -107,11 +107,14 @@ ThemeData get lightTheme => ThemeData(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     ),
   ),
-  cardTheme: const CardThemeData(
+  cardTheme: CardThemeData(
     color: LightModeColors.lightOnPrimary,
-elevation: .5,
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(16)),
+      borderRadius: const BorderRadius.all(Radius.circular(16)),
+      side: BorderSide(
+        color: LightModeColors.lightOnSurface.withValues(alpha: 0.1),
+      ),
     ),
   ),
   appBarTheme: AppBarTheme(
@@ -220,11 +223,14 @@ ThemeData get darkTheme => ThemeData(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     ),
   ),
-  cardTheme: const CardThemeData(
+  cardTheme: CardThemeData(
     color: DarkModeColors.darkShadow,
-    shadowColor: DarkModeColors.elevationShadow,
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(16)),
+      borderRadius: const BorderRadius.all(Radius.circular(16)),
+      side: BorderSide(
+        color: DarkModeColors.darkOnSurface.withValues(alpha: 0.1),
+      ),
     ),
   ),
   appBarTheme: AppBarTheme(

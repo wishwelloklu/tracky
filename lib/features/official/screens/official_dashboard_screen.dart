@@ -39,7 +39,7 @@ class _OfficialDashboardScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hi, ${user.name.split(' ').first}! 👋'),
+        title: Text('Hi, ${user.firstName}! 👋'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -81,7 +81,7 @@ class _OfficialDashboardScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user.name,
+                              user.firstName,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),

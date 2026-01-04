@@ -1,9 +1,10 @@
-import 'package:uuid/uuid.dart';
-import 'package:tracky_mobile/core/services/storage_service.dart';
+import 'package:tracky_mobile/core/network/dio_client.dart';
 import 'package:tracky_mobile/features/shared/models/package_model.dart';
 
 class PackageService {
-  static const _uuid = Uuid();
+  final DioClient _dioClient;
+
+  PackageService(this._dioClient);
 
   Future<PackageModel> createPackage({
     required String mineralType,
@@ -11,86 +12,89 @@ class PackageService {
     required DateTime mineDate,
     required String location,
     required String grade,
-    required String minerId,
     required String minerName,
     String? notes,
   }) async {
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    final package = PackageModel(
-      id: _generateTagId(),
-      mineralType: mineralType,
-      quantity: quantity,
-      mineDate: mineDate,
-      location: location,
-      grade: grade,
-      minerId: minerId,
-      minerName: minerName,
-      createdAt: DateTime.now(),
-      status: PackageStatus.pending,
-      notes: notes,
-    );
-
-    // Save to local storage
-    await _savePackageLocally(package);
-
-    return package;
-  }
-
-  Future<List<PackageModel>> getMinerPackages(String minerId) async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final packages = StorageService.getPackages();
-    final minerPackages = packages
-        .where((p) => p['minerId'] == minerId)
-        .map((p) => PackageModel.fromJson(p))
-        .toList();
-
-    // Sort by creation date (newest first)
-    minerPackages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    return minerPackages;
-  }
-
-  Future<PackageModel?> getPackageById(String packageId) async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final packages = StorageService.getPackages();
     try {
-      final packageData = packages.firstWhere((p) => p['id'] == packageId);
-      return PackageModel.fromJson(packageData);
+      final response = await _dioClient.post(
+        '/api/v1/packages/create',
+        data: {
+          'mineralType': mineralType,
+          'quantity': quantity,
+          'mineDate': mineDate.toIso8601String().split('T')[0],
+          'createdAt': DateTime.now().toIso8601String().split('T')[0],
+          'location': location,
+          'grade': grade,
+          'notes': notes ?? '',
+          'status': 'pending',
+        },
+      );
+
+      dynamic data = response.data;
+      if (data is Map && data.containsKey('data')) {
+        data = data['data']; // Unwrap envelope
+      }
+
+      // If backend returns the created object, use it.
+      // If not, we construct a local version with a temp or returned ID.
+      if (data != null && data is Map) {
+        return PackageModel.fromJson(Map<String, dynamic>.from(data));
+      }
+
+      // Fallback (shouldn't be reached if API is correct)
+      return PackageModel(
+        id: 'TEMP_${DateTime.now().millisecondsSinceEpoch}',
+        mineralType: mineralType,
+        quantity: quantity,
+        mineDate: mineDate,
+        location: location,
+        grade: grade,
+        minerName: minerName,
+        createdAt: DateTime.now(),
+        status: PackageStatus.pending,
+        notes: notes,
+      );
     } catch (e) {
-      return null;
+      throw Exception('Failed to create package: ${e.toString()}');
     }
   }
 
-  Future<void> _savePackageLocally(PackageModel package) async {
-    final packages = StorageService.getPackages();
-    packages.add(package.toJson());
-    await StorageService.savePackages(packages);
+  Future<List<PackageModel>> getMinerPackages() async {
+    // Assuming /api/v1/packages/ returns packages visible to the user (miner)
+    return getAllPackages();
   }
 
-  String _generateTagId() {
-    // Generate a unique tag ID with prefix
-    final uuid = _uuid.v4();
-    final shortId = uuid.replaceAll('-', '').substring(0, 12).toUpperCase();
-    return 'TRK$shortId';
-  }
+  // Future<PackageModel?> getPackageById() async {
+  //   try {
+  //     final packages = await getAllPackages();
+  //     return packages;
+  //   } catch (_) {
+  //     return null;
+  //   }
+  // }
 
   Future<List<PackageModel>> getAllPackages() async {
-    // This would be used by officials to get all packages
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final response = await _dioClient.get('/api/v1/packages/');
 
-    final packages = StorageService.getPackages();
-    final allPackages = packages.map((p) => PackageModel.fromJson(p)).toList();
+      if (response.isSuccess) {
+        dynamic data = response.data;
+        if (data is Map && data.containsKey('data')) {
+          data = data['data'];
+        }
 
-    // Sort by creation date (newest first)
-    allPackages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    return allPackages;
+        if (data is List) {
+          return data.map((json) {
+            return PackageModel.fromJson(json);
+          }).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      // In case of error (e.g. offline), we might want to return empty or throw.
+      // Returning empty list for safety.
+      return [];
+    }
   }
 
   Future<PackageModel> updatePackageStatus(
@@ -98,73 +102,27 @@ class PackageService {
     PackageStatus newStatus, {
     String? notes,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await _dioClient.post(
+        '/api/v1/packages/verify',
+        data: {'packageId': packageId, 'status': newStatus.name},
+      );
 
-    final packages = StorageService.getPackages();
-    final packageIndex = packages.indexWhere((p) => p['id'] == packageId);
-
-    if (packageIndex == -1) {
-      throw Exception('Package not found');
+      // Re-fetch to get updated state
+      final packages = await getAllPackages();
+      try {
+        return packages.firstWhere((p) => p.id == packageId);
+      } catch (_) {
+        throw Exception('Updated package not found in list');
+      }
+    } catch (e) {
+      throw Exception('Failed to update package status: ${e.toString()}');
     }
-
-    final packageData = packages[packageIndex];
-    final package = PackageModel.fromJson(packageData);
-    final updatedPackage = package.copyWith(
-      status: newStatus,
-      notes: notes ?? package.notes,
-    );
-
-    packages[packageIndex] = updatedPackage.toJson();
-    await StorageService.savePackages(packages);
-
-    return updatedPackage;
   }
 
-  // Initialize with some sample data
+  // Method meant for sample data initialization - likely no longer needed with real API
+  // Keeping empty or deprecated to match interface if used elsewhere
   Future<void> initializeSampleData() async {
-    final existingPackages = StorageService.getPackages();
-    if (existingPackages.isNotEmpty) return;
-
-    final samplePackages = [
-      PackageModel(
-        id: 'TRK001SAMPLE1',
-        mineralType: 'Gold Dust',
-        quantity: 15.5,
-        mineDate: DateTime.now().subtract(const Duration(days: 5)),
-        location: 'Obuasi, Ashanti Region',
-        grade: '22K',
-        minerId: '1',
-        minerName: 'Kwame Asante',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        status: PackageStatus.pending,
-      ),
-      PackageModel(
-        id: 'TRK002SAMPLE2',
-        mineralType: 'Raw Gold',
-        quantity: 8.2,
-        mineDate: DateTime.now().subtract(const Duration(days: 12)),
-        location: 'Obuasi, Ashanti Region',
-        grade: '24K',
-        minerId: '1',
-        minerName: 'Kwame Asante',
-        createdAt: DateTime.now().subtract(const Duration(days: 12)),
-        status: PackageStatus.verified,
-      ),
-      PackageModel(
-        id: 'TRK003SAMPLE3',
-        mineralType: 'Gold Nuggets',
-        quantity: 23.7,
-        mineDate: DateTime.now().subtract(const Duration(days: 3)),
-        location: 'Tarkwa, Western Region',
-        grade: '20K',
-        minerId: '3',
-        minerName: 'Kofi Adjei',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        status: PackageStatus.pending,
-      ),
-    ];
-
-    final packagesJson = samplePackages.map((p) => p.toJson()).toList();
-    await StorageService.savePackages(packagesJson);
+    // No-op for real API
   }
 }

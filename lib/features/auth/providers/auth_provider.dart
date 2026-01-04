@@ -2,8 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:tracky_mobile/features/auth/models/user_model.dart';
 import 'package:tracky_mobile/features/auth/services/auth_service.dart';
+import 'package:tracky_mobile/core/network/dio_provider.dart';
 
-final authServiceProvider = Provider<AuthService>((ref) => AuthService());
+final authServiceProvider = Provider<AuthService>((ref) {
+  final dioClient = ref.read(dioClientProvider);
+  return AuthService(dioClient);
+});
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(authServiceProvider));

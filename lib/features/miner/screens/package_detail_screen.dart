@@ -131,7 +131,7 @@ class PackageDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    _DetailRow(label: 'Miner ID', value: package.minerId),
+                    _DetailRow(label: 'Miner ID', value: package.minerId ?? ''),
                     _DetailRow(label: 'Miner Name', value: package.minerName),
                   ],
                 ),

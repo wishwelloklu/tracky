@@ -54,14 +54,14 @@ class RoleSelectionScreen extends StatelessWidget {
                 title: 'Small-Scale Miner',
                 subtitle: 'Register and tag your gold packages',
                 icon: Icons.engineering,
-                onTap: () => _navigateToLogin(context, UserRole.miner),
+                onTap: () => _navigateToLogin(context, UserRole.user),
               ),
               const SizedBox(height: 16),
               _RoleCard(
                 title: 'GOLDBOD Official',
                 subtitle: 'Scan and verify gold packages',
                 icon: Icons.verified_user,
-                onTap: () => _navigateToLogin(context, UserRole.official),
+                onTap: () => _navigateToLogin(context, UserRole.admin),
               ),
 
               const SizedBox(height: 48),

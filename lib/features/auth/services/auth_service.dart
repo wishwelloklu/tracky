@@ -1,74 +1,39 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
+import 'dart:developer';
 import 'package:tracky_mobile/core/services/storage_service.dart';
 import 'package:tracky_mobile/features/auth/models/user_model.dart';
+import 'package:tracky_mobile/core/network/dio_client.dart';
 
 class AuthService {
-  static const List<Map<String, dynamic>> _mockUsers = [
-    {
-      'id': '1',
-      'name': 'Kwame Asante',
-      'email': 'kwame@example.com',
-      'phone': '+233244123456',
-      'password': '12345678',
-      'role': 'miner',
-      'location': 'Obuasi, Ashanti Region',
-      'minerStatus': 'active',
-    },
-    {
-      'id': '2',
-      'name': 'Akosua Mensah',
-      'email': 'akosua@goldbod.gov.gh',
-      'phone': '+233244654321',
-      'password': 'official123',
-      'role': 'official',
-      'location': 'Accra',
-    },
-    {
-      'id': '3',
-      'name': 'Kofi Adjei',
-      'email': 'kofi.miner@gmail.com',
-      'phone': '+233244987654',
-      'password': 'miner456',
-      'role': 'miner',
-      'location': 'Tarkwa, Western Region',
-      'minerStatus': 'active',
-    },
-  ];
+  final DioClient _dioClient;
+
+  AuthService(this._dioClient);
 
   Future<AuthResult> login(
     String emailOrPhone,
     String password,
     UserRole role,
   ) async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate API delay
-
     try {
-      final user = _mockUsers.firstWhere(
-        (u) =>
-            (u['email'] == emailOrPhone || u['phone'] == emailOrPhone) &&
-            u['password'] == password &&
-            u['role'] == role.name,
+      final response = await _dioClient.post(
+        '/api/v1/auth/login',
+        data: {'email': emailOrPhone, 'password': password},
       );
+      log(response.data.toString());
+      final token = response.data['data']['token'];
+      if (token == null) {
+        return AuthResult.error('Login successful but no token received.');
+      }
 
-      final userModel = UserModel(
-        id: user['id'],
-        name: user['name'],
-        email: user['email'],
-        phone: user['phone'],
-        role: UserRole.values.firstWhere((e) => e.name == user['role']),
-        location: user['location'],
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        minerStatus: user['minerStatus'] != null
-            ? MinerStatus.values.firstWhere(
-                (e) => e.name == user['minerStatus'],
-              )
-            : null,
-      );
-
-      // Generate mock JWT token
-      final token = _generateMockToken(userModel);
+      final userData = response.data['data']['userResponseDto'];
+      UserModel userModel;
+      if (userData != null) {
+        userModel = UserModel.fromJson(userData);
+      } else {
+        // If user data not returned, we might need another call or assume from token
+        // For now, returning error if no user data, or we could fallback to a basic model
+        return AuthResult.error('Login successful but no user data received.');
+      }
 
       // Save to local storage
       await StorageService.saveToken(token);
@@ -76,8 +41,9 @@ class AuthService {
       await StorageService.saveUserData(userModel.toJson());
 
       return AuthResult.success(userModel, token);
-    } catch (e) {
-      return AuthResult.error('Invalid credentials or role mismatch');
+    } catch (e, stackTrace) {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      return AuthResult.error('Login failed: ${e.toString()}');
     }
   }
 
@@ -89,46 +55,87 @@ class AuthService {
     required UserRole role,
     String? location,
   }) async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate API delay
-
     try {
-      // Check if user already exists
-      final existingUser = _mockUsers.where(
-        (u) => u['email'] == email || u['phone'] == phone,
+      final nameParts = name.split(' ');
+      final firstName = nameParts.first;
+      final lastName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
+
+      final response = await _dioClient.post(
+        '/api/v1/auth/register',
+        data: {
+          'email': email,
+          'password': password,
+          'firstName': firstName,
+          'lastName': lastName,
+          'phoneNumber': phone,
+        },
       );
 
-      if (existingUser.isNotEmpty) {
-        return AuthResult.error('User with this email or phone already exists');
+      dynamic data = response.data;
+      if (data is Map && data.containsKey('data')) {
+        data = data['data']; // Unwrap envelope
       }
 
-      final userId = (Random().nextInt(9000) + 1000).toString();
-      final userModel = UserModel(
-        id: userId,
-        name: name,
-        email: email,
-        phone: phone,
-        role: role,
-        location: location,
-        createdAt: DateTime.now(),
-        minerStatus: role == UserRole.miner ? MinerStatus.pending : null,
+      // If success, we usually get some data back.
+      // If the API returns the created user and token, excellent.
+      // Assuming similar behavior to login for now, or just success.
+
+      // Postman example: { "data": { "id": ... } }
+      // It doesn't show token in register response example.
+      // So we might need to login after register.
+      // But let's return success for now.
+
+      return AuthResult.success(
+        UserModel(
+          id: (data is Map && data['id'] != null) ? data['id'] : 0,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          phone: phone,
+          role: role,
+          createdAt: DateTime.now(),
+          location: location,
+        ),
+        'temp_token_if_not_provided',
       );
-
-      // Generate mock JWT token
-      final token = _generateMockToken(userModel);
-
-      // Save to local storage
-      await StorageService.saveToken(token);
-      await StorageService.saveUserRole(role.name);
-      await StorageService.saveUserData(userModel.toJson());
-
-      return AuthResult.success(userModel, token);
     } catch (e) {
-      return AuthResult.error('Failed to create account: ${e.toString()}');
+      return AuthResult.error('Signup failed: ${e.toString()}');
     }
   }
 
   Future<void> logout() async {
+    try {
+      await _dioClient.post('/api/v1/auth/logout');
+    } catch (_) {
+      // Ignore network error on logout
+    }
     await StorageService.logout();
+  }
+
+  Future<bool> generateOtp(String email) async {
+    try {
+      await _dioClient.post(
+        '/api/v1/auth/generate_otp',
+        data: {'email': email},
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> verifyOtp(String email, String otp) async {
+    try {
+      await _dioClient.post(
+        '/api/v1/auth/verify_otp',
+        data: {'email': email, 'otp': otp},
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<UserModel?> getCurrentUser() async {
@@ -141,30 +148,6 @@ class AuthService {
 
   bool isLoggedIn() {
     return StorageService.isLoggedIn();
-  }
-
-  String _generateMockToken(UserModel user) {
-    final header = base64Encode(
-      utf8.encode(jsonEncode({'alg': 'HS256', 'typ': 'JWT'})),
-    );
-
-    final payload = base64Encode(
-      utf8.encode(
-        jsonEncode({
-          'sub': user.id,
-          'email': user.email,
-          'role': user.role.name,
-          'iat': DateTime.now().millisecondsSinceEpoch,
-          'exp': DateTime.now()
-              .add(const Duration(days: 30))
-              .millisecondsSinceEpoch,
-        }),
-      ),
-    );
-
-    final signature = base64Encode(utf8.encode('mock_signature_${user.id}'));
-
-    return '$header.$payload.$signature';
   }
 }
 
