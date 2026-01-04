@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tracky_mobile/core/models/api_response.dart';
-import 'package:tracky_mobile/core/network/auth_interceptor.dart';
+import 'package:tracky_mobile/core/network/dio_interceptor.dart';
 
 class DioClient {
   late final Dio _dio;
@@ -8,14 +8,13 @@ class DioClient {
   DioClient() {
     _dio = Dio(
       BaseOptions(
-  
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         responseType: ResponseType.json,
       ),
     );
 
-    _dio.interceptors.add(AuthInterceptor(_dio));
+    _dio.interceptors.add(DioInterceptor(_dio));
     _dio.interceptors.add(
       LogInterceptor(
         request: true,

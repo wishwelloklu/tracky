@@ -5,10 +5,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:tracky_mobile/core/services/storage_service.dart';
 
-class AuthInterceptor extends Interceptor {
+class DioInterceptor extends Interceptor {
   final Dio dio;
 
-  AuthInterceptor(this.dio);
+  DioInterceptor(this.dio);
 
   @override
   void onRequest(

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:tracky_mobile/core/services/notification_service.dart';
 import 'package:tracky_mobile/core/services/storage_service.dart';
 import 'package:tracky_mobile/features/auth/models/user_model.dart';
 import 'package:tracky_mobile/core/network/dio_client.dart';
@@ -15,9 +16,14 @@ class AuthService {
     UserRole role,
   ) async {
     try {
+      final deviceToken = await NotificationService().getToken();
       final response = await _dioClient.post(
         '/api/v1/auth/login',
-        data: {'email': emailOrPhone, 'password': password},
+        data: {
+          'email': emailOrPhone,
+          'password': password,
+          // 'deviceToken': deviceToken,
+        },
       );
       log(response.data.toString());
       final token = response.data['data']['token'];
