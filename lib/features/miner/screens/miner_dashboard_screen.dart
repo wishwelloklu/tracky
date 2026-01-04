@@ -5,8 +5,10 @@ import 'package:tracky_mobile/features/miner/providers/package_provider.dart';
 import 'package:tracky_mobile/features/miner/screens/new_package_screen.dart';
 import 'package:tracky_mobile/features/miner/screens/package_history_screen.dart';
 import 'package:tracky_mobile/features/shared/models/package_model.dart';
-import 'package:tracky_mobile/features/auth/screens/role_selection_screen.dart';
+
 import 'package:tracky_mobile/features/auth/models/user_model.dart';
+import 'package:tracky_mobile/features/profile/screens/profile_screen.dart';
+import 'package:tracky_mobile/features/notifications/screens/notifications_screen.dart';
 
 class MinerDashboardScreen extends ConsumerStatefulWidget {
   const MinerDashboardScreen({super.key});
@@ -134,7 +136,33 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () => _showLogoutDialog(context),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotificationsScreen(),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.notifications_outlined,
+              color: Theme.of(context).colorScheme.onSurface,
+              size: 24,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          ),
           child: CircleAvatar(
             radius: 24,
             backgroundColor: Theme.of(
@@ -402,34 +430,6 @@ class _MinerDashboardScreenState extends ConsumerState<MinerDashboardScreen> {
   void _navigateToPackageHistory(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const PackageHistoryScreen()),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(authStateProvider.notifier).logout();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const RoleSelectionScreen(),
-                ),
-              );
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -43,116 +43,176 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Package History'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search by Tag ID or mineral type...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            const SizedBox(height: 16),
+            _buildSearchBar(context),
+            const SizedBox(height: 16),
+            _buildTabBar(context),
+            const SizedBox(height: 16),
+            Expanded(
+              child: packagesAsync.when(
+                data: (packages) {
+                  final filteredPackages = _filterPackages(packages);
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await ref.read(minerPackagesProvider.notifier).refresh();
+                    },
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildPackageList(filteredPackages),
+                        _buildPackageList(
+                          _filterByStatus(
+                            filteredPackages,
+                            PackageStatus.pending,
+                          ),
+                        ),
+                        _buildPackageList(
+                          _filterByStatus(
+                            filteredPackages,
+                            PackageStatus.verified,
+                          ),
+                        ),
+                        _buildPackageList(
+                          _filterByStatus(
+                            filteredPackages,
+                            PackageStatus.rejected,
+                          ),
+                        ),
+                      ],
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                ),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _buildErrorView(error.toString()),
               ),
-              const SizedBox(height: 16),
-
-              // Tab Bar
-              TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Pending'),
-                  Tab(text: 'Verified'),
-                  Tab(text: 'Rejected'),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-      body: packagesAsync.when(
-        data: (packages) {
-          final filteredPackages = _filterPackages(packages);
+    );
+  }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await ref.read(minerPackagesProvider.notifier).refresh();
-            },
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildPackageList(filteredPackages),
-                _buildPackageList(
-                  _filterByStatus(filteredPackages, PackageStatus.pending),
-                ),
-                _buildPackageList(
-                  _filterByStatus(filteredPackages, PackageStatus.verified),
-                ),
-                _buildPackageList(
-                  _filterByStatus(filteredPackages, PackageStatus.rejected),
-                ),
-              ],
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading packages',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    ref.read(minerPackagesProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
           ),
+          const SizedBox(width: 16),
+          Text(
+            'Package History',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(16),
         ),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search Tag ID, type...',
+            hintStyle: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+            prefixIcon: Icon(
+              Icons.search,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+          onChanged: (value) => setState(() => _searchQuery = value),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelColor: Theme.of(context).colorScheme.primary,
+        unselectedLabelColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.6),
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        tabs: const [
+          Tab(text: 'All'),
+          Tab(text: 'Pending'),
+          Tab(text: 'Verified'),
+          Tab(text: 'Rejected'),
+        ],
       ),
     );
   }
@@ -187,28 +247,17 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
               size: 64,
               color: Theme.of(
                 context,
-              ).colorScheme.onSurface.withValues(alpha: 0.5),
+              ).colorScheme.onSurface.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 16),
             Text(
               'No packages found',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _searchQuery.isNotEmpty
-                  ? 'Try adjusting your search terms'
-                  : 'Your packages will appear here once created',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(
                   context,
                 ).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.bold,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -216,18 +265,59 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       itemCount: packages.length,
       itemBuilder: (context, index) {
         final package = packages[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _PackageCard(
+          child: _PackageItem(
             package: package,
             onTap: () => _navigateToPackageDetail(context, package),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildErrorView(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Has trouble loading',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () =>
+                  ref.read(minerPackagesProvider.notifier).refresh(),
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -240,138 +330,153 @@ class _PackageHistoryScreenState extends ConsumerState<PackageHistoryScreen>
   }
 }
 
-class _PackageCard extends StatelessWidget {
+class _PackageItem extends StatelessWidget {
   final PackageModel package;
   final VoidCallback onTap;
 
-  const _PackageCard({required this.package, required this.onTap});
+  const _PackageItem({required this.package, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(
-                        package.status,
-                        context,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Icon(
-                      _getStatusIcon(package.status),
-                      color: _getStatusColor(package.status, context),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          package.id,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'monospace',
-                              ),
-                        ),
-                        Text(
-                          package.formattedCreatedAt,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.7),
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(
-                        package.status,
-                        context,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      package.statusDisplayName,
-                      style: TextStyle(
-                        color: _getStatusColor(package.status, context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Details
-              Row(
-                children: [
-                  Expanded(
-                    child: _DetailItem(
-                      icon: Icons.diamond,
-                      label: 'Type',
-                      value: package.mineralType,
-                    ),
-                  ),
-                  Expanded(
-                    child: _DetailItem(
-                      icon: Icons.scale,
-                      label: 'Quantity',
-                      value: package.quantityDisplayText,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _DetailItem(
-                      icon: Icons.grade,
-                      label: 'Grade',
-                      value: package.grade,
-                    ),
-                  ),
-                  Expanded(
-                    child: _DetailItem(
-                      icon: Icons.location_on,
-                      label: 'Location',
-                      value: package.location,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(
+                      package.status,
+                    ).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getStatusIcon(package.status),
+                    color: _getStatusColor(package.status),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        package.id,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        package.formattedCreatedAt,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    package.statusDisplayName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: _getStatusColor(package.status),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _buildInfoBadge(
+                  context,
+                  Icons.diamond_outlined,
+                  package.mineralType,
+                ),
+                const SizedBox(width: 8),
+                _buildInfoBadge(
+                  context,
+                  Icons.scale_outlined,
+                  package.quantityDisplayText,
+                ),
+                const SizedBox(width: 8),
+                if (package.grade.isNotEmpty) ...[
+                  _buildInfoBadge(context, Icons.grade_outlined, package.grade),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Color _getStatusColor(PackageStatus status, BuildContext context) {
+  Widget _buildInfoBadge(BuildContext context, IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(PackageStatus status) {
     switch (status) {
       case PackageStatus.pending:
         return Colors.orange;
@@ -387,58 +492,9 @@ class _PackageCard extends StatelessWidget {
       case PackageStatus.pending:
         return Icons.hourglass_empty;
       case PackageStatus.verified:
-        return Icons.verified;
+        return Icons.check;
       case PackageStatus.rejected:
-        return Icons.cancel;
+        return Icons.close;
     }
-  }
-}
-
-class _DetailItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DetailItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }

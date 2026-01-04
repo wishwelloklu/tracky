@@ -11,222 +11,67 @@ class PackageDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Package ${package.id}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () => _sharePackage(context),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Card
-            Card(
-              color: _getStatusColor(
-                package.status,
-                context,
-              ).withValues(alpha: 0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Icon(
-                      _getStatusIcon(package.status),
-                      color: _getStatusColor(package.status, context),
-                      size: 32,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            package.statusDisplayName,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: _getStatusColor(
-                                    package.status,
-                                    context,
-                                  ),
-                                ),
-                          ),
-                          Text(
-                            _getStatusDescription(package.status),
-                            style: TextStyle(
-                              color: _getStatusColor(
-                                package.status,
-                                context,
-                              ).withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Package Information
-            Text(
-              'Package Information',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _DetailRow(
-                      label: 'Tag ID',
-                      value: package.id,
-                      copyable: true,
-                    ),
-                    _DetailRow(
-                      label: 'Mineral Type',
-                      value: package.mineralType,
-                    ),
-                    _DetailRow(
-                      label: 'Quantity',
-                      value: package.quantityDisplayText,
-                    ),
-                    _DetailRow(label: 'Grade', value: package.grade),
-                    _DetailRow(
-                      label: 'Mine Date',
-                      value: package.formattedMineDate,
-                    ),
-                    _DetailRow(label: 'Location', value: package.location),
-                    _DetailRow(
-                      label: 'Created',
-                      value: package.formattedCreatedAt,
-                    ),
-                    if (package.notes != null)
-                      _DetailRow(label: 'Notes', value: package.notes!),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Miner Information
-            Text(
-              'Miner Information',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _DetailRow(label: 'Miner ID', value: package.minerId ?? ''),
-                    _DetailRow(label: 'Miner Name', value: package.minerName),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // QR Code
-            Text(
-              'QR Code',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: QrImageView(
-                        data: package.id,
-                        version: QrVersions.auto,
-                        size: 200,
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        gapless: false,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      package.id,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () => _copyToClipboard(context, package.id),
-                      icon: const Icon(Icons.copy),
-                      label: const Text('Copy Tag ID'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Instructions
-            Card(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Verification Instructions',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                              ),
-                        ),
-                      ],
-                    ),
+                    _buildStatusSection(context),
+                    const SizedBox(height: 24),
+                    _buildQrSection(context),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Package Information'),
                     const SizedBox(height: 12),
-                    Text(
-                      '• Present this QR code to GOLDBOD officials for verification\n'
-                      '• If the QR code is damaged, provide the Tag ID for manual entry\n'
-                      '• Keep your gold package with this tag at all times\n'
-                      '• Contact GOLDBOD if you notice any discrepancies',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    _buildInfoContainer(context, [
+                      _DetailRow(
+                        label: 'Tag ID',
+                        value: package.id,
+                        copyable: true,
                       ),
-                    ),
+                      _DetailRow(
+                        label: 'Mineral Type',
+                        value: package.mineralType,
+                      ),
+                      _DetailRow(
+                        label: 'Quantity',
+                        value: package.quantityDisplayText,
+                      ),
+                      if (package.grade.isNotEmpty)
+                        _DetailRow(label: 'Grade', value: package.grade),
+                      _DetailRow(
+                        label: 'Mine Date',
+                        value: package.formattedMineDate,
+                      ),
+                      _DetailRow(label: 'Location', value: package.location),
+                      _DetailRow(
+                        label: 'Created',
+                        value: package.formattedCreatedAt,
+                      ),
+                      if (package.notes != null && package.notes!.isNotEmpty)
+                        _DetailRow(label: 'Notes', value: package.notes!),
+                    ]),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Miner Information'),
+                    const SizedBox(height: 12),
+                    _buildInfoContainer(context, [
+                      _DetailRow(
+                        label: 'Miner ID',
+                        value: package.minerId ?? 'N/A',
+                      ),
+                      _DetailRow(label: 'Miner Name', value: package.minerName),
+                    ]),
+                    const SizedBox(height: 24),
+                    _buildInstructions(context),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -237,7 +82,258 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(PackageStatus status, BuildContext context) {
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+          Text(
+            'Package Details',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          GestureDetector(
+            onTap: () => _sharePackage(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.ios_share,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _getStatusColor(package.status).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _getStatusColor(package.status).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _getStatusColor(package.status),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getStatusIcon(package.status),
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  package.statusDisplayName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _getStatusColor(package.status),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getStatusDescription(package.status),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQrSection(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: QrImageView(
+              data: package.id,
+              version: QrVersions.auto,
+              size: 200,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              gapless: false,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.qr_code,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Show to Official for Scanning',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
+    );
+  }
+
+  Widget _buildInfoContainer(BuildContext context, List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildInstructions(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Verification Instructions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• Present this QR code to GOLDBOD officials for verification\n'
+                  '• If damaged, provide Tag ID manually\n'
+                  '• Keep package securely tagged',
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(PackageStatus status) {
     switch (status) {
       case PackageStatus.pending:
         return Colors.orange;
@@ -253,54 +349,29 @@ class PackageDetailScreen extends StatelessWidget {
       case PackageStatus.pending:
         return Icons.hourglass_empty;
       case PackageStatus.verified:
-        return Icons.verified;
+        return Icons.check;
       case PackageStatus.rejected:
-        return Icons.cancel;
+        return Icons.close;
     }
   }
 
   String _getStatusDescription(PackageStatus status) {
     switch (status) {
       case PackageStatus.pending:
-        return 'Awaiting verification by GOLDBOD officials';
+        return 'Awaiting official verification';
       case PackageStatus.verified:
-        return 'Successfully verified and approved';
+        return 'Verified and approved';
       case PackageStatus.rejected:
-        return 'Rejected during verification process';
+        return 'Verification rejected';
     }
   }
 
-  void _copyToClipboard(BuildContext context, String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tag ID "$text" copied to clipboard'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-
   void _sharePackage(BuildContext context) {
-    final shareText =
-        '''
-Gold Package Details - Traky
-
-Tag ID: ${package.id}
-Mineral Type: ${package.mineralType}
-Quantity: ${package.quantityDisplayText}
-Grade: ${package.grade}
-Mine Date: ${package.formattedMineDate}
-Location: ${package.location}
-Status: ${package.statusDisplayName}
-Miner: ${package.minerName}
-
-Created on ${package.formattedCreatedAt}
-    ''';
-
-    // In a real app, you would use share_plus package
+    // Logic for sharing would go here
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Share functionality would be available in production'),
+        duration: Duration(seconds: 1),
       ),
     );
   }
@@ -324,48 +395,48 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
+          Expanded(
+            flex: 2,
             child: Text(
-              '$label:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              label,
+              style: TextStyle(
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+                fontSize: 14,
               ),
             ),
           ),
           Expanded(
-            child: copyable
-                ? InkWell(
-                    onTap: () => _copyToClipboard(context, value),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            value,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: copyable ? 'monospace' : null,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.copy,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ],
-                    ),
-                  )
-                : Text(
+            flex: 3,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
                     value,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontFamily: copyable ? 'monospace' : null,
                     ),
                   ),
+                ),
+                if (copyable) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _copyToClipboard(context, value),
+                    child: Icon(
+                      Icons.copy,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -376,8 +447,10 @@ class _DetailRow extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$text copied to clipboard'),
+        content: Text('Copied: $text'),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 1),
       ),
     );
   }
