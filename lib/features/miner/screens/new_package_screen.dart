@@ -5,6 +5,8 @@ import 'package:tracky_mobile/core/constants/app_constants.dart';
 import 'package:tracky_mobile/features/auth/providers/auth_provider.dart';
 import 'package:tracky_mobile/features/miner/providers/package_provider.dart';
 import 'package:tracky_mobile/features/miner/screens/qr_code_display_screen.dart';
+import 'package:tracky_mobile/features/shared/widgets/custom_dropdown_field.dart';
+import 'package:tracky_mobile/features/shared/widgets/custom_text_field.dart';
 
 class NewPackageScreen extends ConsumerStatefulWidget {
   const NewPackageScreen({super.key});
@@ -111,14 +113,11 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
               const SizedBox(height: 24),
 
               // Mineral Type Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _selectedMineralType,
-                decoration: const InputDecoration(
-                  labelText: 'Mineral Type',
-                  hintText: 'Select mineral type',
-                  prefixIcon: Icon(Icons.diamond),
-                  border: OutlineInputBorder(),
-                ),
+              CustomDropdownField<String>(
+                label: 'Mineral Type',
+                hint: 'Select mineral type',
+                prefixIcon: const Icon(Icons.diamond_outlined),
+                value: _selectedMineralType,
                 items: AppConstants.mineralTypes
                     .map(
                       (type) =>
@@ -137,18 +136,15 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
               const SizedBox(height: 16),
 
               // Quantity Field
-              TextFormField(
+              CustomTextField(
                 controller: _quantityController,
+                label: 'Quantity (grams)',
+                hint: 'Enter quantity',
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Quantity (grams)',
-                  hintText: 'Enter quantity in grams',
-                  prefixIcon: Icon(Icons.scale),
-                  suffixText: 'g',
-                  border: OutlineInputBorder(),
-                ),
+                prefixIcon: const Icon(Icons.scale_outlined),
+                suffixText: 'g',
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter the quantity';
@@ -163,14 +159,11 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
               const SizedBox(height: 16),
 
               // Grade Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _selectedGrade,
-                decoration: const InputDecoration(
-                  labelText: 'Grade',
-                  hintText: 'Select gold grade',
-                  prefixIcon: Icon(Icons.grade),
-                  border: OutlineInputBorder(),
-                ),
+              CustomDropdownField<String>(
+                label: 'Grade',
+                hint: 'Select gold grade',
+                prefixIcon: const Icon(Icons.grade_outlined),
+                value: _selectedGrade,
                 items: AppConstants.gradeOptions
                     .map(
                       (grade) =>
@@ -190,30 +183,28 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
               // Mine Date Picker
               InkWell(
                 onTap: () => _selectMineDate(context),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Mine Date',
-                    prefixIcon: Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Text(
-                    DateFormat('MMM dd, yyyy').format(_selectedDate),
-                    style: Theme.of(context).textTheme.bodyLarge,
+                borderRadius: BorderRadius.circular(12),
+                child: IgnorePointer(
+                  child: CustomTextField(
+                    controller: TextEditingController(
+                      text: DateFormat('MMM dd, yyyy').format(_selectedDate),
+                    ),
+                    label: 'Mine Date',
+                    hint: 'Select date',
+                    readOnly: true,
+                    prefixIcon: const Icon(Icons.calendar_today_outlined),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
 
               // Location Field
-              TextFormField(
+              CustomTextField(
                 controller: _locationController,
+                label: 'Mining Location',
+                hint: user.location ?? 'Enter specific mining location',
                 textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  labelText: 'Mining Location',
-                  hintText: user.location ?? 'Enter specific mining location',
-                  prefixIcon: const Icon(Icons.location_on),
-                  border: const OutlineInputBorder(),
-                ),
+                prefixIcon: const Icon(Icons.location_on_outlined),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter the mining location';
@@ -224,16 +215,12 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
               const SizedBox(height: 16),
 
               // Notes Field (Optional)
-              TextFormField(
+              CustomTextField(
                 controller: _notesController,
+                label: 'Notes (Optional)',
+                hint: 'Additional information...',
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  hintText: 'Additional information about the package...',
-                  prefixIcon: Icon(Icons.note),
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
+                prefixIcon: const Icon(Icons.note_alt_outlined),
               ),
               const SizedBox(height: 24),
 
@@ -372,7 +359,7 @@ class _NewPackageScreenState extends ConsumerState<NewPackageScreen> {
           mineDate: _selectedDate,
           location: location,
           grade: _selectedGrade!,
-          
+
           minerName: user.firstName,
           notes: notes,
         );

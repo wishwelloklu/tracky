@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tracky_mobile/features/auth/models/user_model.dart';
 import 'package:tracky_mobile/features/auth/providers/auth_provider.dart';
-import 'package:tracky_mobile/features/miner/screens/miner_dashboard_screen.dart';
-import 'package:tracky_mobile/features/official/screens/official_dashboard_screen.dart';
+
+import 'package:tracky_mobile/features/auth/screens/otp_verification_screen.dart';
+
+import 'package:tracky_mobile/features/shared/widgets/custom_text_field.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   final UserRole role;
@@ -41,17 +43,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authState = ref.watch(authStateProvider);
 
     // Navigate to appropriate dashboard after successful signup
-    ref.listen(authStateProvider, (previous, next) {
-      if (next.isAuthenticated && next.user != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => widget.role == UserRole.user
-                ? const MinerDashboardScreen()
-                : const OfficialDashboardScreen(),
-          ),
-        );
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(title: Text('Sign Up as ${widget.role.roleDisplayName}')),
@@ -99,15 +90,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 32),
 
                 // Full Name Field
-                TextFormField(
+                CustomTextField(
                   controller: _nameController,
+                  label: 'Full Name',
+                  hint: 'Enter your full name',
+                  prefixIcon: const Icon(Icons.person_outlined),
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    hintText: 'Enter your full name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your full name';
@@ -121,15 +109,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 16),
 
                 // Email Field
-                TextFormField(
+                CustomTextField(
                   controller: _emailController,
+                  label: 'Email Address',
+                  hint: 'Enter your email address',
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email Address',
-                    hintText: 'Enter your email address',
-                    prefixIcon: Icon(Icons.email),
-                    border: OutlineInputBorder(),
-                  ),
+                  prefixIcon: const Icon(Icons.email_outlined),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email address';
@@ -143,15 +128,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 16),
 
                 // Phone Field
-                TextFormField(
+                CustomTextField(
                   controller: _phoneController,
+                  label: 'Phone Number',
+                  hint: '+233 XX XXX XXXX',
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    hintText: '+233 XX XXX XXXX',
-                    prefixIcon: Icon(Icons.phone),
-                    border: OutlineInputBorder(),
-                  ),
+                  prefixIcon: const Icon(Icons.phone_outlined),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your phone number';
@@ -162,19 +144,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 16),
 
                 // Location Field (especially important for miners)
-                TextFormField(
+                CustomTextField(
                   controller: _locationController,
+                  label: widget.role == UserRole.user
+                      ? 'Mining Location'
+                      : 'Location',
+                  hint: widget.role == UserRole.user
+                      ? 'e.g., Obuasi, Ashanti Region'
+                      : 'e.g., Accra',
+                  prefixIcon: const Icon(Icons.location_on_outlined),
                   textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    labelText: widget.role == UserRole.user
-                        ? 'Mining Location'
-                        : 'Location',
-                    hintText: widget.role == UserRole.user
-                        ? 'e.g., Obuasi, Ashanti Region'
-                        : 'e.g., Accra',
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: const OutlineInputBorder(),
-                  ),
                   validator: widget.role == UserRole.user
                       ? (value) {
                           if (value == null || value.isEmpty) {
@@ -187,23 +166,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 16),
 
                 // Password Field
-                TextFormField(
+                CustomTextField(
                   controller: _passwordController,
+                  label: 'Password',
+                  hint: 'Create a strong password',
                   obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Create a strong password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+                  prefixIcon: const Icon(Icons.lock_outlined),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
-                    border: const OutlineInputBorder(),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -218,25 +197,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 16),
 
                 // Confirm Password Field
-                TextFormField(
+                CustomTextField(
                   controller: _confirmPasswordController,
+                  label: 'Confirm Password',
+                  hint: 'Confirm your password',
                   obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Confirm your password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () => setState(
-                        () =>
-                            _obscureConfirmPassword = !_obscureConfirmPassword,
-                      ),
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
-                    border: const OutlineInputBorder(),
+                    onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -328,8 +306,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               : null,
         );
 
-    if (!success && mounted) {
-      // Error is handled by the provider and displayed in UI
+    if (success && mounted) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+              role: widget.role,
+            ),
+          ),
+        );
+      }
     }
   }
 }

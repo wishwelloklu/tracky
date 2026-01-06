@@ -109,10 +109,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     if (result.success) {
+      // Signup successful (OTP sent), but NOT authenticated yet
       state = state.copyWith(
         isLoading: false,
-        isAuthenticated: true,
-        user: result.user,
+        isAuthenticated: false,
         error: null,
       );
       return true;
@@ -120,6 +120,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, error: result.error);
       return false;
     }
+  }
+
+  Future<bool> verifyOtp(String email, String otp) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    final success = await _authService.verifyOtp(email, otp);
+
+    if (success) {
+      state = state.copyWith(isLoading: false, error: null);
+      return true;
+    } else {
+      state = state.copyWith(isLoading: false, error: 'Invalid OTP');
+      return false;
+    }
+  }
+
+  Future<bool> generateOtp(String email) async {
+    // We don't set loading state here to keep the UI interactive,
+    // or we could set a specific 'isResendingOtp' state if we had it.
+    // For now, we'll just return the result.
+    final success = await _authService.generateOtp(email);
+    return success;
   }
 
   Future<void> logout() async {

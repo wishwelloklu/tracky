@@ -39,6 +39,7 @@ class DioInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // Handle 401 Unauthorized (Refresh Token Logic)
     if (err.response?.statusCode == 401) {
       RequestOptions options = err.requestOptions;
       // If the token has been updated by another request, retry directly
@@ -63,14 +64,81 @@ class DioInterceptor extends Interceptor {
           return handler.resolve(response);
         } else {
           await StorageService.logout();
-          return handler.next(err);
+          final error = err.copyWith(
+            message: 'Session expired. Please login again.',
+          );
+          return handler.next(error);
         }
       } catch (e) {
         await StorageService.logout();
-        return handler.next(err);
+        final error = err.copyWith(
+          message: 'Session expired. Please login again.',
+        );
+        return handler.next(error);
       }
     }
-    handler.next(err);
+
+    // Handle other status codes
+    String errorMessage = 'An unexpected error occurred';
+    final response = err.response;
+
+    if (response != null) {
+      log(" error data: ${response.data}");
+      if (response.data is Map<String, dynamic> &&
+          response.data['message'] != null) {
+        errorMessage = response.data['message'];
+      } else if (response.data is String) {
+        errorMessage = response.data;
+      }
+
+      switch (response.statusCode) {
+        case 400:
+          errorMessage = errorMessage != 'An unexpected error occurred'
+              ? errorMessage
+              : 'Bad Request';
+          break;
+        case 403:
+          errorMessage =
+              'Access Forbidden: You do not have permission to perform this action.';
+          break;
+        case 404:
+          errorMessage = 'Resource Not Found';
+          break;
+        case 500:
+          errorMessage = 'Internal Server Error. Please try again later.';
+          break;
+        case 502:
+        case 503:
+          errorMessage = 'Service Unavailable. Please try again later.';
+          break;
+      }
+    } else {
+      // Handle network errors
+      switch (err.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          errorMessage =
+              'Connection Timeout. Please check your internet connection.';
+          break;
+        case DioExceptionType.connectionError:
+          errorMessage = 'No Internet Connection.';
+          break;
+        case DioExceptionType.cancel:
+          errorMessage = 'Request Cancelled.';
+          break;
+        default:
+          errorMessage = 'Network Error. Please try again.';
+      }
+    }
+
+    // Return the error with the custom message
+    final customError = err.copyWith(
+      message: errorMessage,
+      response:
+          err.response, // Keep the original response for debugging if needed
+    );
+    handler.next(customError);
   }
 
   Future<String?> _refreshToken() async {

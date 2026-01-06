@@ -22,7 +22,7 @@ class AuthService {
         data: {
           'email': emailOrPhone,
           'password': password,
-          // 'deviceToken': deviceToken,
+          'deviceToken': deviceToken,
         },
       );
       log(response.data.toString());
@@ -68,7 +68,7 @@ class AuthService {
           ? nameParts.sublist(1).join(' ')
           : '';
 
-      final response = await _dioClient.post(
+      await _dioClient.post(
         '/api/v1/auth/register',
         data: {
           'email': email,
@@ -79,35 +79,12 @@ class AuthService {
         },
       );
 
-      dynamic data = response.data;
-      if (data is Map && data.containsKey('data')) {
-        data = data['data']; // Unwrap envelope
-      }
-
-      // If success, we usually get some data back.
-      // If the API returns the created user and token, excellent.
-      // Assuming similar behavior to login for now, or just success.
-
-      // Postman example: { "data": { "id": ... } }
-      // It doesn't show token in register response example.
-      // So we might need to login after register.
-      // But let's return success for now.
-
-      return AuthResult.success(
-        UserModel(
-          id: (data is Map && data['id'] != null) ? data['id'] : 0,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          phone: phone,
-          role: role,
-          createdAt: DateTime.now(),
-          location: location,
-        ),
-        'temp_token_if_not_provided',
-      );
+      // Registration successful, OTP sent.
+      // We don't have a user or token yet.
+      return AuthResult.otpSent();
     } catch (e) {
-      return AuthResult.error('Signup failed: ${e.toString()}');
+      log(e.toString(), error: e);
+      return AuthResult.error('Signup failed: ${e.toString().split(':').last}');
     }
   }
 
@@ -134,11 +111,15 @@ class AuthService {
 
   Future<bool> verifyOtp(String email, String otp) async {
     try {
-      await _dioClient.post(
+      final response = await _dioClient.post(
         '/api/v1/auth/verify_otp',
         data: {'email': email, 'otp': otp},
       );
-      return true;
+
+      if (response.isSuccess) {
+        return true;
+      }
+      return false;
     } catch (e) {
       return false;
     }
@@ -167,6 +148,10 @@ class AuthResult {
 
   factory AuthResult.success(UserModel user, String token) {
     return AuthResult._(success: true, user: user, token: token);
+  }
+
+  factory AuthResult.otpSent() {
+    return AuthResult._(success: true); // Success but no user/token yet
   }
 
   factory AuthResult.error(String error) {
